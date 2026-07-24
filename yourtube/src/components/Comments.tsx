@@ -33,6 +33,8 @@ const Comments = ({ videoId }: any) => {
   const [editText, setEditText] = useState("");
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
+  const [translatedText, setTranslatedText] = useState<{ [key: string]: string }>({});
+  const [translating, setTranslating] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     loadComments();
@@ -198,6 +200,55 @@ const Comments = ({ videoId }: any) => {
     }
   };
 
+  const detectLangCode = (text: string): string => {
+    if (/[\u0900-\u097F]/.test(text)) return "hi"; // Devanagari (Hindi)
+    if (/[\u0600-\u06FF]/.test(text)) return "ar"; // Arabic
+    if (/[\u4E00-\u9FFF]/.test(text)) return "zh"; // Chinese
+    if (/[\u3040-\u30FF]/.test(text)) return "ja"; // Japanese
+    if (/[\uAC00-\uD7AF]/.test(text)) return "ko"; // Korean
+    if (/[\u0400-\u04FF]/.test(text)) return "ru"; // Russian/Cyrillic
+    return "en"; // default fallback
+  };
+
+  const handleTranslate = async (comment: Comment) => {
+    const id = comment._id;
+
+    if (translatedText[id]) {
+      setTranslatedText((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+      return;
+    }
+
+    setTranslating((prev) => ({ ...prev, [id]: true }));
+    try {
+      const sourceLang = detectLangCode(comment.commentbody);
+      const targetLang = sourceLang === "en" ? "hi" : "en";
+
+      const res = await fetch(
+        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
+          comment.commentbody
+        )}&langpair=${sourceLang}|${targetLang}`
+      );
+      const data = await res.json();
+      const translated = data?.responseData?.translatedText;
+      setTranslatedText((prev) => ({
+        ...prev,
+        [id]: translated || "Translation unavailable",
+      }));
+    } catch (error) {
+      console.log(error);
+      setTranslatedText((prev) => ({
+        ...prev,
+        [id]: "Translation failed",
+      }));
+    } finally {
+      setTranslating((prev) => ({ ...prev, [id]: false }));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">{comments.length} Comments</h2>
@@ -306,6 +357,12 @@ const Comments = ({ videoId }: any) => {
                     <>
                       <p className="text-sm">{comment.commentbody}</p>
 
+                      {translatedText[comment._id] && (
+                        <p className="text-sm text-gray-500 italic mt-1">
+                          Translated: {translatedText[comment._id]}
+                        </p>
+                      )}
+
                       <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                         <button
                           onClick={() => handleLike(comment._id)}
@@ -331,6 +388,17 @@ const Comments = ({ videoId }: any) => {
                         >
                           <Flag className="w-4 h-4" />
                           Report
+                        </button>
+                        <button
+                          onClick={() => handleTranslate(comment)}
+                          className="flex items-center gap-1"
+                          disabled={translating[comment._id]}
+                        >
+                          {translating[comment._id]
+                            ? "Translating..."
+                            : translatedText[comment._id]
+                            ? "Show original"
+                            : "Translate"}
                         </button>
 
                         {comment.userid === user?._id && (

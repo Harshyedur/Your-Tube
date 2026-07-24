@@ -14,7 +14,9 @@ const containsProfanity = (text) => {
 const isSpammy = (text) => {
   if (/([^\w\s])\1{4,}/.test(text)) return true;
   if (/(.)\1{6,}/.test(text)) return true;
-  const alphaRatio = (text.match(/[a-zA-Z0-9\s]/g) || []).length / text.length;
+  // \p{L} matches any letter in any language (Unicode-aware)
+  const alphaRatio =
+    (text.match(/[\p{L}\p{N}\s]/gu) || []).length / text.length;
   if (text.length > 5 && alphaRatio < 0.3) return true;
   return false;
 };
