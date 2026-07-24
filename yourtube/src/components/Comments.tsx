@@ -5,6 +5,8 @@ import { Button } from "./ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { useUser } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
+import { ThumbsUp, ThumbsDown, Flag } from "lucide-react";
+
 interface Comment {
   _id: string;
   videoid: string;
@@ -12,33 +14,26 @@ interface Comment {
   commentbody: string;
   usercommented: string;
   commentedon: string;
+  likes?: number;
+  dislikes?: number;
+  likedBy?: string[];
+  dislikedBy?: string[];
+  reportCount?: number;
+  isFlagged?: boolean;
+  showLocation?: boolean;
+  location?: string;
 }
+
 const Comments = ({ videoId }: any) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [shareLocation, setShareLocation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
-  const fetchedComments = [
-    {
-      _id: "1",
-      videoid: videoId,
-      userid: "1",
-      commentbody: "Great video! Really enjoyed watching this.",
-      usercommented: "John Doe",
-      commentedon: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      _id: "2",
-      videoid: videoId,
-      userid: "2",
-      commentbody: "Thanks for sharing this amazing content!",
-      usercommented: "Jane Smith",
-      commentedon: new Date(Date.now() - 7200000).toISOString(),
-    },
-  ];
+
   useEffect(() => {
     loadComments();
   }, [videoId]);
@@ -53,33 +48,70 @@ const Comments = ({ videoId }: any) => {
       setLoading(false);
     }
   };
+
   if (loading) {
-    return <div>Loading history...</div>;
+    return <div>Loading comments...</div>;
   }
+
+  const getCityName = async (): Promise<string> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve("");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            );
+            const data = await res.json();
+            const city =
+              data.address?.city ||
+              data.address?.town ||
+              data.address?.village ||
+              data.address?.state ||
+              "";
+            resolve(city);
+          } catch {
+            resolve("");
+          }
+        },
+        () => resolve(""),
+        { timeout: 5000 }
+      );
+    });
+  };
+
   const handleSubmitComment = async () => {
     if (!user || !newComment.trim()) return;
 
     setIsSubmitting(true);
     try {
-      const res = await axiosInstance.post("/comment/postcomment", {
+      let location = "";
+      if (shareLocation) {
+        location = await getCityName();
+      }
+
+      const payload: any = {
         videoid: videoId,
         userid: user._id,
         commentbody: newComment,
         usercommented: user.name,
-      });
+        showLocation: shareLocation,
+        location: location,
+      };
+      const res = await axiosInstance.post("/comment/postcomment", payload);
       if (res.data.comment) {
-        const newCommentObj: Comment = {
-          _id: Date.now().toString(),
-          videoid: videoId,
-          userid: user._id,
-          commentbody: newComment,
-          usercommented: user.name || "Anonymous",
-          commentedon: new Date().toISOString(),
-        };
-        setComments([newCommentObj, ...comments]);
+        loadComments();
       }
       setNewComment("");
-    } catch (error) {
+      setShareLocation(false);
+    } catch (error: any) {
+      if (error?.response?.status === 400) {
+        alert(error.response.data.message || "Comment rejected");
+      }
       console.error("Error adding comment:", error);
     } finally {
       setIsSubmitting(false);
@@ -122,6 +154,50 @@ const Comments = ({ videoId }: any) => {
       console.log(error);
     }
   };
+
+  const handleLike = async (id: string) => {
+    if (!user) return;
+    try {
+      const res = await axiosInstance.post(`/comment/like/${id}`, {
+        userid: user._id,
+      });
+      setComments((prev) =>
+        prev.map((c) => (c._id === id ? { ...c, ...res.data } : c))
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleDislike = async (id: string) => {
+    if (!user) return;
+    try {
+      const res = await axiosInstance.post(`/comment/dislike/${id}`, {
+        userid: user._id,
+      });
+      setComments((prev) =>
+        prev.map((c) => (c._id === id ? { ...c, ...res.data } : c))
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleReport = async (id: string) => {
+    if (!user) return;
+    try {
+      await axiosInstance.post(`/comment/report/${id}`, {
+        userid: user._id,
+      });
+      alert("Comment reported. Our team will review it.");
+      setComments((prev) =>
+        prev.map((c) => (c._id === id ? { ...c, isFlagged: true } : c))
+      );
+    } catch (error: any) {
+      alert(error?.response?.data?.message || "Could not report comment");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">{comments.length} Comments</h2>
@@ -139,6 +215,14 @@ const Comments = ({ videoId }: any) => {
               onChange={(e: any) => setNewComment(e.target.value)}
               className="min-h-[80px] resize-none border-0 border-b-2 rounded-none focus-visible:ring-0"
             />
+            <label className="flex items-center gap-2 text-xs text-gray-500">
+              <input
+                type="checkbox"
+                checked={shareLocation}
+                onChange={(e) => setShareLocation(e.target.checked)}
+              />
+              Share my location with this comment
+            </label>
             <div className="flex gap-2 justify-end">
               <Button
                 variant="ghost"
@@ -157,70 +241,115 @@ const Comments = ({ videoId }: any) => {
           </div>
         </div>
       )}
+
       <div className="space-y-4">
         {comments.length === 0 ? (
           <p className="text-sm text-gray-500 italic">
             No comments yet. Be the first to comment!
           </p>
         ) : (
-          comments.map((comment) => (
-            <div key={comment._id} className="flex gap-4">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src="/placeholder.svg?height=40&width=40" />
-                <AvatarFallback>{comment.usercommented[0]}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-sm">
-                    {comment.usercommented}
-                  </span>
-                  <span className="text-xs text-gray-600">
-                    {formatDistanceToNow(new Date(comment.commentedon))} ago
-                  </span>
-                </div>
+          comments.map((comment) => {
+            const userLiked = user && comment.likedBy?.includes(user._id);
+            const userDisliked = user && comment.dislikedBy?.includes(user._id);
 
-                {editingCommentId === comment._id ? (
-                  <div className="space-y-2">
-                    <Textarea
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                    />
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        onClick={handleUpdateComment}
-                        disabled={!editText.trim()}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingCommentId(null);
-                          setEditText("");
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-sm">{comment.commentbody}</p>
-                    {comment.userid === user?._id && (
-                      <div className="flex gap-2 mt-2 text-sm text-gray-500">
-                        <button onClick={() => handleEdit(comment)}>
-                          Edit
-                        </button>
-                        <button onClick={() => handleDelete(comment._id)}>
-                          Delete
-                        </button>
-                      </div>
+            return (
+              <div key={comment._id} className="flex gap-4">
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src="/placeholder.svg?height=40&width=40" />
+                  <AvatarFallback>{comment.usercommented[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-sm">
+                      {comment.usercommented}
+                    </span>
+                    <span className="text-xs text-gray-600">
+                      {formatDistanceToNow(new Date(comment.commentedon))} ago
+                    </span>
+                    {comment.showLocation && comment.location && (
+                      <span className="text-xs text-gray-400">
+                        · {comment.location}
+                      </span>
                     )}
-                  </>
-                )}
+                    {comment.isFlagged && (
+                      <span className="text-xs text-red-500">
+                        · Under review
+                      </span>
+                    )}
+                  </div>
+
+                  {editingCommentId === comment._id ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          onClick={handleUpdateComment}
+                          disabled={!editText.trim()}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingCommentId(null);
+                            setEditText("");
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm">{comment.commentbody}</p>
+
+                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                        <button
+                          onClick={() => handleLike(comment._id)}
+                          className={`flex items-center gap-1 ${
+                            userLiked ? "text-blue-600" : ""
+                          }`}
+                        >
+                          <ThumbsUp className="w-4 h-4" />
+                          {comment.likes || 0}
+                        </button>
+                        <button
+                          onClick={() => handleDislike(comment._id)}
+                          className={`flex items-center gap-1 ${
+                            userDisliked ? "text-blue-600" : ""
+                          }`}
+                        >
+                          <ThumbsDown className="w-4 h-4" />
+                          {comment.dislikes || 0}
+                        </button>
+                        <button
+                          onClick={() => handleReport(comment._id)}
+                          className="flex items-center gap-1"
+                        >
+                          <Flag className="w-4 h-4" />
+                          Report
+                        </button>
+
+                        {comment.userid === user?._id && (
+                          <>
+                            <button onClick={() => handleEdit(comment)}>
+                              Edit
+                            </button>
+                            <button onClick={() => handleDelete(comment._id)}>
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
