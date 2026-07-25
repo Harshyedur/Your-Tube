@@ -35,6 +35,7 @@ const Comments = ({ videoId }: any) => {
   const [loading, setLoading] = useState(true);
   const [translatedText, setTranslatedText] = useState<{ [key: string]: string }>({});
   const [translating, setTranslating] = useState<{ [key: string]: boolean }>({});
+  const [preferredLang, setPreferredLang] = useState("en");
 
   useEffect(() => {
     loadComments();
@@ -225,13 +226,13 @@ const Comments = ({ videoId }: any) => {
     setTranslating((prev) => ({ ...prev, [id]: true }));
     try {
       const sourceLang = detectLangCode(comment.commentbody);
-      const targetLang = sourceLang === "en" ? "hi" : "en";
 
       const res = await fetch(
         `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
           comment.commentbody
-        )}&langpair=${sourceLang}|${targetLang}`
+        )}&langpair=${sourceLang}|${preferredLang}`
       );
+
       const data = await res.json();
       const translated = data?.responseData?.translatedText;
       setTranslatedText((prev) => ({
@@ -251,7 +252,33 @@ const Comments = ({ videoId }: any) => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">{comments.length} Comments</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">{comments.length} Comments</h2>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-gray-500">Translate to:</span>
+          <select
+            value={preferredLang}
+            onChange={(e) => setPreferredLang(e.target.value)}
+            className="border rounded px-2 py-1 text-sm"
+          >
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="ru">Russian</option>
+            <option value="zh">Chinese</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+            <option value="ar">Arabic</option>
+            <option value="bn">Bengali</option>
+            <option value="ta">Tamil</option>
+            <option value="te">Telugu</option>
+          </select>
+        </div>
+      </div>
 
       {user && (
         <div className="flex gap-4">
