@@ -228,13 +228,13 @@ const Comments = ({ videoId }: any) => {
       const sourceLang = detectLangCode(comment.commentbody);
 
       const res = await fetch(
-        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${preferredLang}&dt=t&q=${encodeURIComponent(
           comment.commentbody
-        )}&langpair=${sourceLang}|${preferredLang}`
+        )}`
       );
 
       const data = await res.json();
-      const translated = data?.responseData?.translatedText;
+      const translated = data?.[0]?.map((chunk: any) => chunk[0]).join("") || "";
       setTranslatedText((prev) => ({
         ...prev,
         [id]: translated || "Translation unavailable",
@@ -393,18 +393,16 @@ const Comments = ({ videoId }: any) => {
                       <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                         <button
                           onClick={() => handleLike(comment._id)}
-                          className={`flex items-center gap-1 ${
-                            userLiked ? "text-blue-600" : ""
-                          }`}
+                          className={`flex items-center gap-1 ${userLiked ? "text-blue-600" : ""
+                            }`}
                         >
                           <ThumbsUp className="w-4 h-4" />
                           {comment.likes || 0}
                         </button>
                         <button
                           onClick={() => handleDislike(comment._id)}
-                          className={`flex items-center gap-1 ${
-                            userDisliked ? "text-blue-600" : ""
-                          }`}
+                          className={`flex items-center gap-1 ${userDisliked ? "text-blue-600" : ""
+                            }`}
                         >
                           <ThumbsDown className="w-4 h-4" />
                           {comment.dislikes || 0}
@@ -424,8 +422,8 @@ const Comments = ({ videoId }: any) => {
                           {translating[comment._id]
                             ? "Translating..."
                             : translatedText[comment._id]
-                            ? "Show original"
-                            : "Translate"}
+                              ? "Show original"
+                              : "Translate"}
                         </button>
 
                         {comment.userid === user?._id && (
