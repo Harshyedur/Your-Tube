@@ -21,13 +21,8 @@ const VideoInfo = ({ video }: any) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const { user } = useUser();
   const [isWatchLater, setIsWatchLater] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  // const user: any = {
-  //   id: "1",
-  //   name: "John Doe",
-  //   email: "john@example.com",
-  //   image: "https://github.com/shadcn.png?height=32&width=32",
-  // };
   useEffect(() => {
     setlikes(video.Like || 0);
     setDislikes(video.Dislike || 0);
@@ -51,6 +46,7 @@ const VideoInfo = ({ video }: any) => {
     };
     handleviews();
   }, [user]);
+
   const handleLike = async () => {
     if (!user) return;
     try {
@@ -74,6 +70,7 @@ const VideoInfo = ({ video }: any) => {
       console.log(error);
     }
   };
+
   const handleWatchLater = async () => {
     try {
       const res = await axiosInstance.post(`/watch/${video._id}`, {
@@ -88,6 +85,7 @@ const VideoInfo = ({ video }: any) => {
       console.log(error);
     }
   };
+
   const handleDislike = async () => {
     if (!user) return;
     try {
@@ -111,6 +109,42 @@ const VideoInfo = ({ video }: any) => {
       console.log(error);
     }
   };
+
+  const handleDownload = async () => {
+    if (!user) {
+      alert("Please sign in to download videos.");
+      return;
+    }
+    setIsDownloading(true);
+    try {
+      const res = await axiosInstance.post("/download/request", {
+        userid: user._id,
+        videoid: video._id,
+      });
+
+      const fileUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/${video.filepath}`;
+      const link = document.createElement("a");
+      link.href = fileUrl;
+      link.download = video.filename || "video.mp4";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      alert(
+        `Download started. You have ${res.data.remainingToday} download(s) left today.`
+      );
+    } catch (error: any) {
+      if (error?.response?.status === 403) {
+        alert(error.response.data.message);
+      } else {
+        alert("Something went wrong while downloading.");
+      }
+      console.log(error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{video.videotitle}</h1>
@@ -179,9 +213,11 @@ const VideoInfo = ({ video }: any) => {
             variant="ghost"
             size="sm"
             className="bg-gray-100 rounded-full"
+            onClick={handleDownload}
+            disabled={isDownloading}
           >
             <Download className="w-5 h-5 mr-2" />
-            Download
+            {isDownloading ? "Downloading..." : "Download"}
           </Button>
           <Button
             variant="ghost"

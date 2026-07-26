@@ -18,6 +18,7 @@ export const login = async (req, res) => {
     return res.status(500).json({ message: "Something went wrong" });
   }
 };
+
 export const updateprofile = async (req, res) => {
   const { id: _id } = req.params;
   const { channelname, description } = req.body;
@@ -36,6 +37,30 @@ export const updateprofile = async (req, res) => {
       { new: true }
     );
     return res.status(201).json(updatedata);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+export const updateplan = async (req, res) => {
+  const { id: _id } = req.params;
+  const { plan } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(_id)) {
+    return res.status(400).json({ message: "Invalid user id" });
+  }
+  if (!["free", "premium"].includes(plan)) {
+    return res.status(400).json({ message: "Invalid plan value" });
+  }
+
+  try {
+    const updatedUser = await users.findByIdAndUpdate(
+      _id,
+      { $set: { plan } },
+      { new: true }
+    );
+    return res.status(200).json({ result: updatedUser });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Something went wrong" });
