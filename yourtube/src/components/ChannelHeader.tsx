@@ -1,34 +1,12 @@
 import React, { useState } from "react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
-import axiosInstance from "@/lib/axiosinstance";
-import { useUser } from "@/lib/AuthContext";
+import Link from "next/link";
 
 const ChannelHeader = ({ channel, user }: any) => {
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [plan, setPlan] = useState(channel?.plan || "free");
-  const [isUpgrading, setIsUpgrading] = useState(false);
-  const { login } = useUser();
 
   const isOwnChannel = user && user?._id === channel?._id;
-
-  const handleUpgrade = async () => {
-    setIsUpgrading(true);
-    try {
-      const newPlan = plan === "free" ? "premium" : "free";
-      const res = await axiosInstance.patch(
-        `/user/updateplan/${channel._id}`,
-        { plan: newPlan }
-      );
-      setPlan(res.data.result.plan);
-      login(res.data.result);
-    } catch (error) {
-      console.error("Error updating plan:", error);
-      alert("Could not update plan. Please try again.");
-    } finally {
-      setIsUpgrading(false);
-    }
-  };
 
   return (
     <div className="w-full">
@@ -56,26 +34,29 @@ const ChannelHeader = ({ channel, user }: any) => {
             {isOwnChannel && (
               <div className="flex items-center gap-3 pt-2">
                 <span
-                  className={`text-xs font-medium px-2 py-1 rounded-full ${plan === "premium"
-                      ? "bg-yellow-100 text-yellow-800"
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-full capitalize flex items-center gap-1.5 ${
+                    channel?.plan === "gold"
+                      ? "bg-amber-100 text-amber-800"
+                      : channel?.plan === "silver"
+                      ? "bg-blue-100 text-blue-800"
+                      : channel?.plan === "bronze"
+                      ? "bg-orange-100 text-orange-800"
                       : "bg-gray-100 text-gray-700"
-                    }`}
+                  }`}
                 >
-                  {plan === "premium" ? "Premium plan" : "Free plan"}
+                  {channel?.plan === "gold" && "👑"}
+                  {channel?.plan === "silver" && "🥈"}
+                  {channel?.plan === "bronze" && "🥉"}
+                  {channel?.plan || "free"} plan
                 </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleUpgrade}
-                  disabled={isUpgrading}
-                  className="bg-white text-black border-gray-300 hover:bg-gray-50"
-                >
-                  {isUpgrading
-                    ? "Updating..."
-                    : plan === "free"
-                      ? "Upgrade to Premium"
-                      : "Switch to Free"}
-                </Button>
+                <Link href="/upgrade">
+                  <Button
+                    size="sm"
+                    className="bg-gray-900 text-white hover:bg-gray-800"
+                  >
+                    Manage plan
+                  </Button>
+                </Link>
               </div>
             )}
           </div>
