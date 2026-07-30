@@ -62,7 +62,24 @@ export default function PricingCards() {
       alert("Please sign in to upgrade your plan.");
       return;
     }
-    if (planKey === "free") return;
+
+    if (planKey === "free") {
+      setProcessingPlan(planKey);
+      try {
+        const res = await axiosInstance.patch(`/user/updateplan/${user._id}`, {
+          plan: "free",
+        });
+        login(res.data.result);
+        setCurrentPlan("free");
+        alert("Switched to Free plan.");
+      } catch (error) {
+        console.error(error);
+        alert("Could not switch plan. Please try again.");
+      } finally {
+        setProcessingPlan(null);
+      }
+      return;
+    }
 
     setProcessingPlan(planKey);
     try {
@@ -165,7 +182,9 @@ export default function PricingCards() {
                 ? "Current plan"
                 : processingPlan === plan.key
                 ? "Processing..."
-                : `Upgrade`}
+                : plan.key === "free"
+                ? "Switch to Free"
+                : "Upgrade"}
             </Button>
           </div>
         );
