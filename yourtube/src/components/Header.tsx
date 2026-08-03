@@ -1,4 +1,4 @@
-import { Bell, Menu, Mic, Search, User, VideoIcon } from "lucide-react";
+import { Bell, Menu, Mic, Search, User, VideoIcon, Sun, Moon } from "lucide-react";
 import React, { useState } from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
@@ -14,12 +14,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import Channeldialogue from "./channeldialogue";
 import { useRouter } from "next/router";
 import { useUser } from "@/lib/AuthContext";
+import axiosInstance from "@/lib/axiosinstance";
 
 const Header = () => {
-  const { user, logout, handlegooglesignin } = useUser();
+  const { user, logout, handlegooglesignin, login } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [isdialogeopen, setisdialogeopen] = useState(false);
+  const [isTogglingTheme, setIsTogglingTheme] = useState(false);
   const router = useRouter();
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -31,8 +34,62 @@ const Header = () => {
       handleSearch(e as any);
     }
   };
+
+  const handleToggleTheme = async (event: React.MouseEvent) => {
+    if (!user) return;
+    setIsTogglingTheme(true);
+
+    const newTheme = user.theme === "dark" ? "light" : "dark";
+
+    const applyChange = async () => {
+      try {
+        const res = await axiosInstance.patch(`/user/updatetheme/${user._id}`, {
+          theme: newTheme,
+        });
+        login(res.data.result);
+      } catch (error) {
+        console.error("Error updating theme:", error);
+      } finally {
+        setIsTogglingTheme(false);
+      }
+    };
+
+    // Circular wipe using View Transitions API, if supported
+    if ((document as any).startViewTransition) {
+      const x = event.clientX;
+      const y = event.clientY;
+      const endRadius = Math.hypot(
+        Math.max(x, window.innerWidth - x),
+        Math.max(y, window.innerHeight - y)
+      );
+
+      const transition = (document as any).startViewTransition(async () => {
+        await applyChange();
+      });
+
+      transition.ready.then(() => {
+        document.documentElement.animate(
+          {
+            clipPath: [
+              `circle(0px at ${x}px ${y}px)`,
+              `circle(${endRadius}px at ${x}px ${y}px)`,
+            ],
+          },
+          {
+            duration: 700,
+            easing: "cubic-bezier(0.65, 0, 0.35, 1)",
+            pseudoElement: "::view-transition-new(root)",
+          }
+        );
+      });
+    } else {
+      // Fallback for unsupported browsers (e.g. Firefox)
+      await applyChange();
+    }
+  };
+
   return (
-    <header className="flex items-center justify-between px-4 py-2 bg-white border-b">
+    <header className="flex items-center justify-between px-4 py-2 bg-background border-b border-border">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon">
           <Menu className="w-6 h-6" />
@@ -74,6 +131,27 @@ const Header = () => {
       <div className="flex items-center gap-2">
         {user ? (
           <>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleToggleTheme}
+              disabled={isTogglingTheme}
+              title={user.theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+              className="relative overflow-hidden"
+            >
+              <Sun
+                className={`w-5 h-5 absolute transition-all duration-500 ${user.theme === "dark"
+                  ? "rotate-0 scale-100 opacity-100"
+                  : "rotate-90 scale-0 opacity-0"
+                  }`}
+              />
+              <Moon
+                className={`w-5 h-5 absolute transition-all duration-500 ${user.theme === "dark"
+                  ? "-rotate-90 scale-0 opacity-0"
+                  : "rotate-0 scale-100 opacity-100"
+                  }`}
+              />
+            </Button>
             <Button variant="ghost" size="icon">
               <VideoIcon className="w-6 h-6" />
             </Button>

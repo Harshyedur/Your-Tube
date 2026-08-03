@@ -64,7 +64,7 @@ const VideoUploader = ({ channelId, channelName }: any) => {
       setUploadProgress(0);
       const res = await axiosInstance.post("/video/upload", formdata, {
          headers: {
-    "Content-Type": "multipart/form-data", // ✅ MUST for FormData
+    "Content-Type": "multipart/form-data",
   },
         onUploadProgress: (progresEvent: any) => {
           const progress = Math.round(
@@ -83,23 +83,23 @@ const VideoUploader = ({ channelId, channelName }: any) => {
     }
   };
   return (
-    <div className="bg-gray-50 rounded-lg p-6">
-      <h2 className="text-xl font-semibold mb-4">Upload a video</h2>
+    <div className="bg-secondary/50 rounded-lg p-6">
+      <h2 className="text-xl font-semibold mb-4 text-foreground">Upload a video</h2>
 
       <div className="space-y-4">
         {!videoFile ? (
           <div
-            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:bg-gray-100 transition-colors"
+            className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:bg-secondary transition-colors"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload className="w-12 h-12 mx-auto text-gray-400 mb-2" />
-            <p className="text-lg font-medium">
+            <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
+            <p className="text-lg font-medium text-foreground">
               Drag and drop video files to upload
             </p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               or click to select files
             </p>
-            <p className="text-xs text-gray-400 mt-4">
+            <p className="text-xs text-muted-foreground mt-4">
               MP4, WebM, MOV or AVI • Up to 100MB
             </p>
             <input
@@ -112,13 +112,13 @@ const VideoUploader = ({ channelId, channelName }: any) => {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-white rounded-lg border">
-              <div className="bg-blue-100 p-2 rounded-md">
-                <FileVideo className="w-6 h-6 text-blue-600" />
+            <div className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
+              <div className="bg-blue-100 dark:bg-blue-950 p-2 rounded-md">
+                <FileVideo className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{videoFile.name}</p>
-                <p className="text-sm text-gray-500">
+                <p className="font-medium truncate text-foreground">{videoFile.name}</p>
+                <p className="text-sm text-muted-foreground">
                   {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
                 </p>
               </div>
@@ -128,8 +128,8 @@ const VideoUploader = ({ channelId, channelName }: any) => {
                 </Button>
               )}
               {uploadComplete && (
-                <div className="bg-green-100 p-1 rounded-full">
-                  <Check className="w-5 h-5 text-green-600" />
+                <div className="bg-green-100 dark:bg-green-950 p-1 rounded-full">
+                  <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
                 </div>
               )}
             </div>
@@ -150,7 +150,7 @@ const VideoUploader = ({ channelId, channelName }: any) => {
 
             {isUploading && (
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm text-foreground">
                   <span>Uploading...</span>
                   <span>{uploadProgress}%</span>
                 </div>

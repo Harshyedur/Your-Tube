@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 
 interface RelatedVideosProps {
@@ -9,9 +8,10 @@ interface RelatedVideosProps {
     videochanel: string;
     views: number;
     createdAt: string;
+    filepath?: string;
   }>;
 }
-const vid = "/video/vdo.mp4";
+
 export default function RelatedVideos({ videos }: RelatedVideosProps) {
   return (
     <div className="space-y-2">
@@ -21,18 +21,20 @@ export default function RelatedVideos({ videos }: RelatedVideosProps) {
           href={`/watch/${video._id}`}
           className="flex gap-2 group"
         >
-          <div className="relative w-40 aspect-video bg-gray-100 rounded overflow-hidden flex-shrink-0">
+          <div className="relative w-40 aspect-video bg-muted rounded overflow-hidden flex-shrink-0">
             <video
-              src={vid}
-              className="object-cover group-hover:scale-105 transition-transform duration-200"
+              src={`${process.env.NEXT_PUBLIC_BACKEND_URL}/${video.filepath}`}
+              className="object-cover group-hover:scale-105 transition-transform duration-200 w-full h-full"
+              preload="metadata"
+              muted
             />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600">
+            <h3 className="font-medium text-sm line-clamp-2 group-hover:text-blue-600 text-foreground">
               {video.videotitle}
             </h3>
-            <p className="text-xs text-gray-600 mt-1">{video.videochanel}</p>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground mt-1">{video.videochanel}</p>
+            <p className="text-xs text-muted-foreground">
               {video.views.toLocaleString()} views •{" "}
               {formatDistanceToNow(new Date(video.createdAt))} ago
             </p>

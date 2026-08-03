@@ -9,7 +9,7 @@ const ChannelHeader = ({ channel, user }: any) => {
   const isOwnChannel = user && user?._id === channel?._id;
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-background text-foreground">
       <div className="relative h-32 md:h-48 lg:h-64 bg-gradient-to-r from-blue-400 to-purple-500 overflow-hidden"></div>
 
       <div className="px-4 py-6">
@@ -21,12 +21,12 @@ const ChannelHeader = ({ channel, user }: any) => {
           </Avatar>
 
           <div className="flex-1 space-y-2">
-            <h1 className="text-2xl md:text-4xl font-bold">{channel?.channelname}</h1>
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground">{channel?.channelname}</h1>
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
               <span>@{channel?.channelname.toLowerCase().replace(/\s+/g, "")}</span>
             </div>
             {channel?.description && (
-              <p className="text-sm text-gray-700 max-w-2xl">
+              <p className="text-sm text-muted-foreground max-w-2xl">
                 {channel?.description}
               </p>
             )}
@@ -41,7 +41,7 @@ const ChannelHeader = ({ channel, user }: any) => {
                       ? "bg-blue-100 text-blue-800"
                       : channel?.plan === "bronze"
                       ? "bg-orange-100 text-orange-800"
-                      : "bg-gray-100 text-gray-700"
+                      : "bg-secondary text-secondary-foreground"
                   }`}
                 >
                   {channel?.plan === "gold" && "👑"}
@@ -52,7 +52,7 @@ const ChannelHeader = ({ channel, user }: any) => {
                 <Link href="/upgrade">
                   <Button
                     size="sm"
-                    className="bg-gray-900 text-white hover:bg-gray-800"
+                    className="bg-primary text-primary-foreground hover:opacity-90"
                   >
                     Manage plan
                   </Button>
@@ -67,7 +67,7 @@ const ChannelHeader = ({ channel, user }: any) => {
                 onClick={() => setIsSubscribed(!isSubscribed)}
                 variant={isSubscribed ? "outline" : "default"}
                 className={
-                  isSubscribed ? "bg-gray-100" : "bg-red-600 hover:bg-red-700"
+                  isSubscribed ? "bg-secondary" : "bg-red-600 hover:bg-red-700 text-white"
                 }
               >
                 {isSubscribed ? "Subscribed" : "Subscribe"}

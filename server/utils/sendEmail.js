@@ -70,3 +70,45 @@ export const sendPlanConfirmationEmail = async ({
     return false;
   }
 };
+
+export const sendOtpEmail = async ({ toEmail, userName, otp, city, state, deviceInfo }) => {
+  const transporter = getTransporter();
+
+  const mailOptions = {
+    from: `"YourTube" <${process.env.EMAIL_USER}>`,
+    to: toEmail,
+    subject: "Verify your login - YourTube",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+        <h2 style="color: #111;">New login detected</h2>
+        <p>Hi ${userName || "there"},</p>
+        <p>We noticed a login attempt from a new location or device:</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+          <tr>
+            <td style="padding: 8px 0; color: #666;">Location</td>
+            <td style="padding: 8px 0; text-align: right;">${city || "Unknown"}, ${state || "Unknown"}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #666;">Device</td>
+            <td style="padding: 8px 0; text-align: right; font-size: 12px;">${deviceInfo || "Unknown"}</td>
+          </tr>
+        </table>
+        <p>Please enter this code to verify it's you:</p>
+        <div style="background: #f5f5f5; padding: 16px; text-align: center; border-radius: 8px; margin: 16px 0;">
+          <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px;">${otp}</span>
+        </div>
+        <p style="color: #666; font-size: 13px;">This code expires in 10 minutes. If this wasn't you, please secure your account.</p>
+        <p style="color: #999; font-size: 12px; margin-top: 24px;">— The YourTube Team</p>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("OTP email sent to", toEmail);
+    return true;
+  } catch (error) {
+    console.error("Error sending OTP email:", error);
+    return false;
+  }
+};

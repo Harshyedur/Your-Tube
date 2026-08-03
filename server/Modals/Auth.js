@@ -12,6 +12,20 @@ const userschema = mongoose.Schema({
     default: "free",
   },
   planExpiresAt: { type: Date, default: null },
+  theme: {
+    type: String,
+    enum: ["light", "dark"],
+    default: "dark",
+  },
+  themeManuallySet: { type: Boolean, default: false },
+  knownLogins: [
+    {
+      city: String,
+      state: String,
+      deviceInfo: String,
+      lastSeen: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 export default mongoose.model("user", userschema);
