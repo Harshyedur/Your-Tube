@@ -202,13 +202,13 @@ const Comments = ({ videoId }: any) => {
   };
 
   const detectLangCode = (text: string): string => {
-    if (/[\u0900-\u097F]/.test(text)) return "hi"; // Devanagari (Hindi)
-    if (/[\u0600-\u06FF]/.test(text)) return "ar"; // Arabic
-    if (/[\u4E00-\u9FFF]/.test(text)) return "zh"; // Chinese
-    if (/[\u3040-\u30FF]/.test(text)) return "ja"; // Japanese
-    if (/[\uAC00-\uD7AF]/.test(text)) return "ko"; // Korean
-    if (/[\u0400-\u04FF]/.test(text)) return "ru"; // Russian/Cyrillic
-    return "en"; // default fallback
+    if (/[\u0900-\u097F]/.test(text)) return "hi";
+    if (/[\u0600-\u06FF]/.test(text)) return "ar";
+    if (/[\u4E00-\u9FFF]/.test(text)) return "zh";
+    if (/[\u3040-\u30FF]/.test(text)) return "ja";
+    if (/[\uAC00-\uD7AF]/.test(text)) return "ko";
+    if (/[\u0400-\u04FF]/.test(text)) return "ru";
+    return "en";
   };
 
   const handleTranslate = async (comment: Comment) => {
@@ -253,13 +253,13 @@ const Comments = ({ videoId }: any) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">{comments.length} Comments</h2>
+        <h2 className="text-xl font-semibold text-foreground">{comments.length} Comments</h2>
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-500">Translate to:</span>
+          <span className="text-muted-foreground">Translate to:</span>
           <select
             value={preferredLang}
             onChange={(e) => setPreferredLang(e.target.value)}
-            className="border rounded px-2 py-1 text-sm"
+            className="border border-border bg-background text-foreground rounded px-2 py-1 text-sm"
           >
             <option value="en">English</option>
             <option value="hi">Hindi</option>
@@ -293,7 +293,7 @@ const Comments = ({ videoId }: any) => {
               onChange={(e: any) => setNewComment(e.target.value)}
               className="min-h-[80px] resize-none border-0 border-b-2 rounded-none focus-visible:ring-0"
             />
-            <label className="flex items-center gap-2 text-xs text-gray-500">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
               <input
                 type="checkbox"
                 checked={shareLocation}
@@ -322,7 +322,7 @@ const Comments = ({ videoId }: any) => {
 
       <div className="space-y-4">
         {comments.length === 0 ? (
-          <p className="text-sm text-gray-500 italic">
+          <p className="text-sm text-muted-foreground italic">
             No comments yet. Be the first to comment!
           </p>
         ) : (
@@ -338,14 +338,14 @@ const Comments = ({ videoId }: any) => {
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-sm">
+                    <span className="font-medium text-sm text-foreground">
                       {comment.usercommented}
                     </span>
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(comment.commentedon))} ago
                     </span>
                     {comment.showLocation && comment.location && (
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         · {comment.location}
                       </span>
                     )}
@@ -382,15 +382,15 @@ const Comments = ({ videoId }: any) => {
                     </div>
                   ) : (
                     <>
-                      <p className="text-sm">{comment.commentbody}</p>
+                      <p className="text-sm text-foreground">{comment.commentbody}</p>
 
                       {translatedText[comment._id] && (
-                        <p className="text-sm text-gray-500 italic mt-1">
+                        <p className="text-sm text-muted-foreground italic mt-1">
                           Translated: {translatedText[comment._id]}
                         </p>
                       )}
 
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                         <button
                           onClick={() => handleLike(comment._id)}
                           className={`flex items-center gap-1 ${userLiked ? "text-blue-600" : ""
